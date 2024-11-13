@@ -15,7 +15,7 @@ import java.util.Locale;
 
 public class DataTablePanel extends JPanel {
 
-    private static final int ROWS_PER_PAGE = 56;
+    private static final int ROWS_PER_PAGE = 1;
     private int currentPage = 1;
     private List<Object[]> allData;
     private DefaultTableModel model;

@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataMobilPanel extends JPanel{
+
+    private static final int ROWS_PER_PAGE = 1;
+    private int currentPage = 1;
     private List<Object[]> allData;
     private DefaultTableModel model;
     private JTable table;
@@ -30,6 +33,9 @@ public class DataMobilPanel extends JPanel{
         table = new JTable(model);
 
         fetchAndDisplayData();
+
+        JPanel paginationPanel = createPaginationPanel();
+        add(paginationPanel, BorderLayout.SOUTH);
 
         // Tambahkan MouseListener untuk mendeteksi klik dua kali pada baris
         table.addMouseListener(new MouseAdapter() {
@@ -66,7 +72,7 @@ public class DataMobilPanel extends JPanel{
                 });
             }
 
-            updateTableData();
+            displayPage(1);
             System.out.println("Data mobil berhasil dimuat, jumlah data: " + allData.size());
 
         } catch (SQLException e) {
@@ -84,6 +90,41 @@ public class DataMobilPanel extends JPanel{
 
     public boolean hasData() {
         return allData != null && !allData.isEmpty();
+    }
+
+    private void displayPage(int pageNumber) {
+        model.setRowCount(0); // Hapus data sebelumnya dari model tabel
+        int start = (pageNumber - 1) * ROWS_PER_PAGE;
+        int end = Math.min(start + ROWS_PER_PAGE, allData.size());
+
+        for (int i = start; i < end; i++) {
+            model.addRow(allData.get(i));
+        }
+
+        currentPage = pageNumber;
+    }
+
+    private JPanel createPaginationPanel() {
+        JPanel paginationPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton btnPrevious = new JButton("Previous");
+        JButton btnNext = new JButton("Next");
+
+        btnPrevious.addActionListener(e -> {
+            if (currentPage > 1) {
+                displayPage(currentPage - 1);
+            }
+        });
+
+        btnNext.addActionListener(e -> {
+            if (currentPage * ROWS_PER_PAGE < allData.size()) {
+                displayPage(currentPage + 1);
+            }
+        });
+
+        paginationPanel.add(btnPrevious);
+        paginationPanel.add(btnNext);
+
+        return paginationPanel;
     }
 
     // Tambahkan metode refreshData untuk memperbarui tabel setelah edit
