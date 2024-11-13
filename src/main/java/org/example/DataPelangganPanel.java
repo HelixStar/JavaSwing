@@ -35,7 +35,7 @@ public class DataPelangganPanel extends JPanel {
         JPanel paginationPanel = createPaginationPanel();
         add(paginationPanel, BorderLayout.SOUTH);
 
-        // Tambahkan MouseListener untuk mendeteksi klik dua kali pada baris
+        // Tambahkan MouseListener untuk mendeteksi klik
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
