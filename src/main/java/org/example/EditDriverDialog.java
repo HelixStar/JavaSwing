@@ -2,6 +2,7 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
 import java.sql.SQLException;
 
 public class EditDriverDialog extends JDialog {
@@ -102,16 +103,41 @@ public class EditDriverDialog extends JDialog {
         String statusSopir = (String) statusSopirField.getSelectedItem();
         String hargaSewa = hargaSewaField.getText();
 
+        if (nama.isEmpty() || email.isEmpty() || nomorTelepon.isEmpty() || alamat.isEmpty() || statusSopir.isEmpty() || hargaSewa.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Semua field harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validate email format
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
+            JOptionPane.showMessageDialog(this, "Email tidak valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validate nomorTelepon
+        if (!nomorTelepon.matches("\\d{11,}")) {
+            JOptionPane.showMessageDialog(this, "Nomor telepon harus berupa angka dan minimal 11 digit.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validate hargaSewa as a valid BigDecimal
+        try {
+            new BigDecimal(hargaSewa);
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Harga sewa harus berupa angka yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         // Construct query and parameters based on whether password is provided
         String query;
         Object[] params;
 
         if (password.isEmpty()) {
             query = "UPDATE sopir SET nama_sopir = ?, email = ?, nomor_telepon = ?, alamat = ?, status_sopir = ?, harga_sewa_per_hari = ? WHERE id = ?";
-            params = new Object[]{nama, email, nomorTelepon, alamat, statusSopir, new java.math.BigDecimal(hargaSewa), sopirId};
+            params = new Object[]{nama, email, nomorTelepon, alamat, statusSopir, new BigDecimal(hargaSewa), sopirId};
         } else {
             query = "UPDATE sopir SET nama_sopir = ?, email = ?, password = ?, nomor_telepon = ?, alamat = ?, status_sopir = ?, harga_sewa_per_hari = ? WHERE id = ?";
-            params = new Object[]{nama, email, password, nomorTelepon, alamat, statusSopir, new java.math.BigDecimal(hargaSewa), sopirId};
+            params = new Object[]{nama, email, password, nomorTelepon, alamat, statusSopir, new BigDecimal(hargaSewa), sopirId};
         }
 
         int rowsUpdated = dbManager.updateData(query, params);

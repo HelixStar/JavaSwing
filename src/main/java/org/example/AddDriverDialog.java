@@ -2,6 +2,7 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
+import java.math.BigDecimal;
 
 public class AddDriverDialog extends JDialog {
     private DataSopirPanel sopirPanel;
@@ -95,18 +96,48 @@ public class AddDriverDialog extends JDialog {
             return;
         }
 
-        // Save to database
-        DatabaseManager dbManager = DatabaseManager.getInstance();
-        String query = "INSERT INTO sopir (nama_sopir, email, password, nomor_telepon, alamat, status_sopir, harga_sewa_per_hari, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
-        Object[] params = {nama, email, password, nomorTelepon, alamat, statusSopir, new java.math.BigDecimal(hargaSewa)};
-        int rowsInserted = dbManager.updateData(query, params);
+        // Validate email format
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
+            JOptionPane.showMessageDialog(this, "Email tidak valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        if (rowsInserted > 0) {
-            JOptionPane.showMessageDialog(this, "Sopir berhasil ditambahkan.");
-            dispose(); // Close dialog after successful save
-            sopirPanel.refreshData(); // Refresh driver data on main panel
-        } else {
-            JOptionPane.showMessageDialog(this, "Gagal menambahkan sopir.", "Error", JOptionPane.ERROR_MESSAGE);
+        // Validate nomorTelepon
+        if (!nomorTelepon.matches("\\d{11,}")) {
+            JOptionPane.showMessageDialog(this, "Nomor telepon harus berupa angka dan minimal 11 digit.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validate hargaSewa
+        BigDecimal hargaSewaValue;
+        try {
+            hargaSewaValue = new BigDecimal(hargaSewa);
+            if (hargaSewaValue.compareTo(BigDecimal.ZERO) <= 0) {
+                JOptionPane.showMessageDialog(this, "Harga sewa harus berupa angka positif.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Harga sewa harus berupa angka yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            // Save to database
+            DatabaseManager dbManager = DatabaseManager.getInstance();
+            String query = "INSERT INTO sopir (nama_sopir, email, password, nomor_telepon, alamat, status_sopir, harga_sewa_per_hari, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+            Object[] params = {nama, email, password, nomorTelepon, alamat, statusSopir, hargaSewaValue};
+
+            int rowsInserted = dbManager.updateData(query, params);
+
+            if (rowsInserted > 0) {
+                JOptionPane.showMessageDialog(this, "Sopir berhasil ditambahkan.");
+                dispose(); // Close dialog after successful save
+                sopirPanel.refreshData(); // Refresh driver data on main panel
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menambahkan sopir.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Terjadi kesalahan tak terduga: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

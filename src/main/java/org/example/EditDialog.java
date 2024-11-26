@@ -252,22 +252,65 @@ public class EditDialog extends JDialog {
         String formattedTanggalSelesai = null;
         String formattedTanggalKembali = null;
 
-        if (!tanggalMulaiText.isEmpty()) {
-            formattedTanggalMulai = dbDateFormat.format(inputDateFormat.parse(tanggalMulaiText));
-        } else {
+        if (tanggalMulaiText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Tanggal Mulai harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
+        } else {
+            try {
+                formattedTanggalMulai = dbDateFormat.format(inputDateFormat.parse(tanggalMulaiText));
+            } catch (ParseException e) {
+                JOptionPane.showMessageDialog(this, "Format Tanggal Mulai tidak valid. Gunakan format dd-MM-yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
 
-        if (!tanggalSelesaiText.isEmpty()) {
-            formattedTanggalSelesai = dbDateFormat.format(inputDateFormat.parse(tanggalSelesaiText));
-        } else {
+        if (tanggalSelesaiText.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Tanggal Selesai harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
+        } else {
+            try {
+                formattedTanggalSelesai = dbDateFormat.format(inputDateFormat.parse(tanggalSelesaiText));
+            } catch (ParseException e) {
+                JOptionPane.showMessageDialog(this, "Format Tanggal Selesai tidak valid. Gunakan format dd-MM-yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
         }
 
         if (!tanggalKembaliText.isEmpty()) {
-            formattedTanggalKembali = dbDateFormat.format(inputDateFormat.parse(tanggalKembaliText));
+            try {
+                formattedTanggalKembali = dbDateFormat.format(inputDateFormat.parse(tanggalKembaliText));
+            } catch (ParseException e) {
+                JOptionPane.showMessageDialog(this, "Format Tanggal Kembali tidak valid. Gunakan format dd-MM-yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+        }
+
+        // Validasi dropdown pilihan
+        if (idMobilDropdown.getSelectedItem() == null || !mobilMap.containsKey(idMobilDropdown.getSelectedItem().toString())) {
+            JOptionPane.showMessageDialog(this, "Pilih mobil yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (idPelangganDropdown.getSelectedItem() == null || !pelangganMap.containsKey(idPelangganDropdown.getSelectedItem().toString())) {
+            JOptionPane.showMessageDialog(this, "Pilih pelanggan yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (idSopirDropdown.getSelectedItem() == null || !sopirMap.containsKey(idSopirDropdown.getSelectedItem().toString())) {
+            JOptionPane.showMessageDialog(this, "Pilih sopir yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validasi dan konversi harga total
+        double totalHarga;
+        try {
+            totalHarga = Double.parseDouble(totalHargaField.getValue().toString().replace(",", "."));
+            if (totalHarga <= 0) {
+                throw new NumberFormatException();
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Total harga harus berupa angka positif.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
         // Menghitung denda jika tanggal kembali melewati hari ini
@@ -305,7 +348,7 @@ public class EditDialog extends JDialog {
                 pstmt.setNull(6, java.sql.Types.DATE);
             }
 
-            pstmt.setDouble(7, Double.parseDouble(totalHargaField.getValue().toString().replace(",", ".")));
+            pstmt.setDouble(7, totalHarga);
             pstmt.setString(8, statusField.getSelectedItem().toString());
             pstmt.setDouble(9, denda);
 
@@ -323,6 +366,7 @@ public class EditDialog extends JDialog {
             }
         }
     }
+
 
 
     private JDialog createProgressDialog() {

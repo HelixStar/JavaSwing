@@ -81,6 +81,24 @@ public class EditCustomerDialog extends JDialog {
         String email = emailField.getText();
 
         // Update data di database
+        if (nama.isEmpty() || nomorTelepon.isEmpty() || alamat.isEmpty() || email.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Semua field harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validasi format email
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
+            JOptionPane.showMessageDialog(this, "Email tidak valid. Harap masukkan email dengan format yang benar.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validasi nomor telepon
+        if (!nomorTelepon.matches("\\d{11,}")) {
+            JOptionPane.showMessageDialog(this, "Nomor telepon harus berupa angka dan minimal 11 digit.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Update data di database
         String query = "UPDATE pelanggan SET nama_pelanggan = ?, nomor_telepon = ?, alamat = ?, email = ? WHERE id = ?";
         Object[] params = {nama, nomorTelepon, alamat, email, customerId};
 

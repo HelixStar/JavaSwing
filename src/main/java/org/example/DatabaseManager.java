@@ -106,4 +106,29 @@ public class DatabaseManager {
             return 0; // Return 0 or handle the error as needed
         }
     }
+
+    public boolean checkLogin(String username, String password) {
+        String query = "SELECT COUNT(*) FROM admin WHERE username = ? AND password = ?";
+
+        try (Connection conn = getConnection();
+        PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+
+
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+
+            try (ResultSet rs = pstmt.executeQuery()){
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Gagal memeriksa login.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return false;
+    }
 }

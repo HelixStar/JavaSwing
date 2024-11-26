@@ -92,25 +92,47 @@ public class EditCarDialog extends JDialog{
     }
 
     private void saveCarData() {
-        String namaMobil = namaMobilField.getText();
-        String tipeMobil = tipeMobilField.getText();
-        String tahunMobil = tahunMobilField.getText();
-        String platNomor = platNomorField.getText();
-        String hargaSewa = hargaSewaField.getText();
+        String namaMobil = namaMobilField.getText().trim();
+        String tipeMobil = tipeMobilField.getText().trim();
+        String tahunMobil = tahunMobilField.getText().trim();
+        String platNomor = platNomorField.getText().trim();
+        String hargaSewa = hargaSewaField.getText().trim();
         String statusMobil = (String) statusMobilCombo.getSelectedItem();
 
-        // Update data di database
-        String query = "UPDATE mobil SET nama_mobil = ?, tipe_mobil = ?, tahun_mobil = ?, plat_nomor = ?, harga_sewa_per_hari = ?, status_mobil = ? WHERE id = ?";
-        Object[] params = {namaMobil, tipeMobil, Integer.parseInt(tahunMobil), platNomor, new java.math.BigDecimal(hargaSewa), statusMobil, carId};
+        // Validasi input nama mobil tidak boleh kosong
+        if (namaMobil.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nama mobil tidak boleh kosong.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        int rowsUpdated = dbManager.updateData(query, params);
+        // Validasi input lainnya
+        if (tipeMobil.isEmpty() || tahunMobil.isEmpty() || platNomor.isEmpty() ||
+                hargaSewa.isEmpty() || statusMobil == null) {
+            JOptionPane.showMessageDialog(this, "Semua field harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-        if (rowsUpdated > 0) {
-            JOptionPane.showMessageDialog(this, "Data mobil berhasil diperbarui.");
-            mobilPanel.refreshData(); // Refresh data di tabel setelah update
-            dispose(); // Tutup dialog
-        } else {
-            JOptionPane.showMessageDialog(this, "Gagal memperbarui data mobil.", "Error", JOptionPane.ERROR_MESSAGE);
+        try {
+            int tahun = Integer.parseInt(tahunMobil); // Validasi tahun sebagai angka
+            new java.math.BigDecimal(hargaSewa); // Validasi apakah hargaSewa valid sebagai BigDecimal
+
+            // Update data di database
+            String query = "UPDATE mobil SET nama_mobil = ?, tipe_mobil = ?, tahun_mobil = ?, plat_nomor = ?, harga_sewa_per_hari = ?, status_mobil = ? WHERE id = ?";
+            Object[] params = {namaMobil, tipeMobil, tahun, platNomor, new java.math.BigDecimal(hargaSewa), statusMobil, carId};
+
+            int rowsUpdated = dbManager.updateData(query, params);
+
+            if (rowsUpdated > 0) {
+                JOptionPane.showMessageDialog(this, "Data mobil berhasil diperbarui.");
+                mobilPanel.refreshData(); // Refresh data di tabel setelah update
+                dispose(); // Tutup dialog
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal memperbarui data mobil.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Tahun mobil dan harga sewa harus berupa angka yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

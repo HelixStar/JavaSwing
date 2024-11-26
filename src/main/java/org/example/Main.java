@@ -2,6 +2,7 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.regex.Pattern;
 
 public class Main extends JFrame {
 
@@ -18,7 +19,13 @@ public class Main extends JFrame {
     private JMenu tambahSopirMenu;
     private JMenuBar menuBar;
 
+
     public Main() {
+
+        if (!showLoginDialog()) {
+            System.exit(0);
+        }
+
         setTitle("Aplikasi Pemesanan Mobil");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -61,6 +68,91 @@ public class Main extends JFrame {
         contentArea.add(dataTablePanel, BorderLayout.CENTER);
         add(contentArea, BorderLayout.CENTER);
     }
+
+
+        private boolean showLoginDialog(){
+            JDialog loginDialog = new JDialog(this, "Login", true);
+            loginDialog.setSize(300, 200);
+            loginDialog.setLocationRelativeTo(this);
+            loginDialog.setLayout(new GridBagLayout());
+
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.insets = new Insets(5, 5, 5, 5);
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+
+            JTextField usernameField = new JTextField(15);
+            JPasswordField passwordField = new JPasswordField(15);
+
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            loginDialog.add(new JLabel("Username:"), gbc);
+
+            gbc.gridx = 1;
+            loginDialog.add(usernameField, gbc);
+
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            loginDialog.add(new JLabel("Password:"), gbc);
+
+            gbc.gridx = 1;
+            loginDialog.add(passwordField, gbc);
+
+            JButton loginButton = new JButton("Login");
+            JButton cancelButton = new JButton("Cancel");
+
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(loginButton);
+            buttonPanel.add(cancelButton);
+
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 2;
+            loginDialog.add(buttonPanel, gbc);
+
+
+            final boolean[] isLoggedIn = {false};
+
+            loginButton.addActionListener(e -> {
+                String username = usernameField.getText();
+                String password = new String(passwordField.getPassword());
+
+                if (authenticate(username, password)) {
+                    isLoggedIn[0] = true;
+                    loginDialog.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(loginDialog, "Username atau password salah.",
+                            "Login Gagal", JOptionPane.ERROR_MESSAGE);
+                }
+            });
+
+            cancelButton.addActionListener(e -> System.exit(0));
+
+            loginDialog.setVisible(true);
+            return isLoggedIn[0];
+        }
+
+
+    private boolean authenticate(String username, String password) {
+        if (!isValidEmail(username)) {
+            JOptionPane.showMessageDialog(null, "Username harus dalam format email yang valid.",
+                    "Invalid input", JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        boolean isLoginSuccesfull = DatabaseManager.getInstance().checkLogin(username, password);
+
+        if (!isLoginSuccesfull) {
+            JOptionPane.showMessageDialog(null, "Username atau Password salah.",
+                    "Login Gagal",JOptionPane.ERROR_MESSAGE);
+        }
+        return isLoginSuccesfull;
+    }
+
+    private boolean isValidEmail(String email){
+        String emailRegex = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
+        return Pattern.matches(emailRegex, email);
+
+    }
+
 
     private JMenu createMenu(String title, Font font, java.awt.event.ActionListener action) {
         JMenu menu = new JMenu(title);
@@ -137,6 +229,8 @@ public class Main extends JFrame {
     private void openAddCarDialog() {
         new AddCarDialog(this, dataMobilPanel).setVisible(true);
     }
+
+
 
     // Show DataSopir Panel
     private void showDataSopir() {

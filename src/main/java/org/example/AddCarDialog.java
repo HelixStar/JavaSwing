@@ -82,27 +82,41 @@ public class AddCarDialog extends JDialog{
 
     private void saveCar(String namaMobil, String tipeMobil, String tahunMobil,
                          String platNomor, String hargaSewa, String statusMobil) {
-        // Validasi input
-        if (namaMobil.isEmpty() || tipeMobil.isEmpty() || tahunMobil.isEmpty() ||
-                platNomor.isEmpty() || hargaSewa.isEmpty() || statusMobil == null) {
+        // Validasi input nama mobil tidak boleh kosong
+        if (namaMobil.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Nama mobil tidak boleh kosong.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validasi input lainnya
+        if (tipeMobil.isEmpty() || tahunMobil.isEmpty() || platNomor.isEmpty() ||
+                hargaSewa.isEmpty() || statusMobil == null) {
             JOptionPane.showMessageDialog(this, "Semua field harus diisi.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Simpan ke database
-        DatabaseManager dbManager = DatabaseManager.getInstance();
-        String query = "INSERT INTO mobil (nama_mobil, tipe_mobil, tahun_mobil, plat_nomor, harga_sewa_per_hari, status_mobil, created_at) " +
-                "VALUES (?, ?, ?, ?, ?, ?, NOW())";
-        Object[] params = {namaMobil, tipeMobil, Integer.parseInt(tahunMobil), platNomor,
-                new java.math.BigDecimal(hargaSewa), statusMobil};
-        int rowsInserted = dbManager.updateData(query, params);
+        try {
+            int tahun = Integer.parseInt(tahunMobil);
+            new java.math.BigDecimal(hargaSewa); // Validasi apakah hargaSewa dapat diubah menjadi BigDecimal
 
-        if (rowsInserted > 0) {
-            JOptionPane.showMessageDialog(this, "Mobil berhasil ditambahkan.");
-            dispose(); // Tutup dialog setelah berhasil simpan
-            mobilPanel.refreshData(); // Refresh data mobil di panel utama
-        } else {
-            JOptionPane.showMessageDialog(this, "Gagal menambahkan mobil.", "Error", JOptionPane.ERROR_MESSAGE);
+            // Simpan ke database
+            DatabaseManager dbManager = DatabaseManager.getInstance();
+            String query = "INSERT INTO mobil (nama_mobil, tipe_mobil, tahun_mobil, plat_nomor, harga_sewa_per_hari, status_mobil, created_at) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, NOW())";
+            Object[] params = {namaMobil, tipeMobil, tahun, platNomor, new java.math.BigDecimal(hargaSewa), statusMobil};
+            int rowsInserted = dbManager.updateData(query, params);
+
+            if (rowsInserted > 0) {
+                JOptionPane.showMessageDialog(this, "Mobil berhasil ditambahkan.");
+                dispose(); // Tutup dialog setelah berhasil simpan
+                mobilPanel.refreshData(); // Refresh data mobil di panel utama
+            } else {
+                JOptionPane.showMessageDialog(this, "Gagal menambahkan mobil.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Tahun mobil dan harga sewa harus berupa angka yang valid.", "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Terjadi kesalahan: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

@@ -71,6 +71,18 @@ public class AddCustomerDialog extends JDialog {
             return;
         }
 
+        // Validasi format email
+        if (!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
+            JOptionPane.showMessageDialog(this, "Email tidak valid. Harap masukkan email dengan format yang benar.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Validasi nomor telepon
+        if (!nomorTelepon.matches("\\d{11,}")) {
+            JOptionPane.showMessageDialog(this, "Nomor telepon harus berupa angka dan minimal 11 digit.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         // Simpan ke database
         DatabaseManager dbManager = DatabaseManager.getInstance();
         String query = "INSERT INTO pelanggan (nama_pelanggan, nomor_telepon, alamat, email, created_at) VALUES (?, ?, ?, ?, NOW())";
