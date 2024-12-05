@@ -91,6 +91,64 @@ public class DatabaseManager {
         return dataList;
     }
 
+    public void deleteMobilById(int id) throws SQLException {
+        String query = "DELETE FROM mobil WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            System.out.println("Data mobil dengan ID " + id + " berhasil dihapus.");
+        } catch (SQLException e) {
+            System.err.println("Gagal menghapus data mobil dengan ID " + id);
+            throw e;
+        }
+    }
+
+
+    public void deletePelangganById(int id) throws SQLException {
+        String query = "DELETE FROM pelanggan WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            System.out.println("Data pelanggan dengan ID " + id + " berhasil dihapus.");
+        } catch (SQLException e) {
+            System.err.println("Gagal menghapus data pelanggan dengan ID " + id);
+            throw e;
+        }
+    }
+
+
+    public void deleteSopirById(int id) throws SQLException {
+        String query = "DELETE FROM sopir WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            System.out.println("Data sopir dengan ID " + id + " berhasil dihapus.");
+        } catch (SQLException e) {
+            System.err.println("Gagal menghapus data sopir dengan ID " + id);
+            throw e;
+        }
+    }
+
+
+    public void deleteDataById(int id) throws SQLException {
+        String query = "DELETE FROM pemesan_mobil WHERE id = ?";
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, id);
+            pstmt.executeUpdate();
+            System.out.println("Data pemesanan dengan ID " + id + " berhasil dihapus.");
+        } catch (SQLException e) {
+            System.err.println("Gagal menghapus data pemesanan dengan ID " + id);
+            throw e;
+        }
+    }
+
+
+
+
     // Update data
     public int updateData(String query, Object[] params) {
         try (Connection conn = getConnection();

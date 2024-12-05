@@ -2,6 +2,7 @@ package org.example;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -26,23 +27,26 @@ public class DataTablePanel extends JPanel {
         setLayout(new BorderLayout());
         dbManager = DatabaseManager.getInstance();
 
-        // Ubah header tabel sesuai dengan nama yang akan ditampilkan
+        // Setup model tabel
         model = new DefaultTableModel(new String[]{
                 "ID", "Nama Pelanggan", "Nama Mobil", "Nama Sopir",
                 "Tanggal Mulai", "Tanggal Selesai", "Tanggal Kembali",
-                "Total Harga", "Status", "Denda", "Created At"
+                "Total Harga", "Status", "Denda", "Created At", "Aksi"
         }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Semua sel tidak bisa diedit
+                return column == 11; // Hanya kolom "Aksi" yang dapat diinteraksi
             }
         };
 
         // Inisialisasi tabel
         table = new JTable(model);
-        add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // Tambahkan MouseListener untuk membuka EditDialog saat baris diklik dua kali
+        // Tambahkan renderer untuk tombol pada kolom "Aksi"
+        table.getColumn("Aksi").setCellRenderer(new ButtonRenderer());
+        table.getColumn("Aksi").setCellEditor(new ButtonEditor(new JCheckBox()));
+
+        // Tambahkan MouseListener untuk klik dua kali pada baris tabel
         table.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -53,15 +57,16 @@ public class DataTablePanel extends JPanel {
             }
         });
 
-        // Ambil dan tampilkan data dari database
+        add(new JScrollPane(table), BorderLayout.CENTER);
+
+        // Ambil data dari database
         fetchAndDisplayData();
 
-        // Tambahkan panel untuk pagination
+        // Tambahkan panel pagination
         JPanel paginationPanel = createPaginationPanel();
         add(paginationPanel, BorderLayout.SOUTH);
     }
 
-    // Fungsi untuk membuka EditDialog
     private void openEditDialog(int rowIndex) {
         Object[] rowData = allData.get(rowIndex);
         EditDialog editDialog = new EditDialog(SwingUtilities.getWindowAncestor(this), rowData, dbManager, rowIndex, this, true);
@@ -71,7 +76,7 @@ public class DataTablePanel extends JPanel {
     public void fetchAndDisplayData() {
         allData = new ArrayList<>();
         try {
-            // Query dengan JOIN untuk mengambil nama pelanggan, mobil, dan sopir
+            // Query JOIN
             String query = "SELECT p.id, pel.nama_pelanggan, m.nama_mobil, s.nama_sopir, " +
                     "p.tanggal_mulai, p.tanggal_selesai, p.tanggal_kembali, " +
                     "p.total_harga, p.status_pemesanan, p.denda, p.created_at " +
@@ -101,7 +106,8 @@ public class DataTablePanel extends JPanel {
                         currencyFormatter.format(rs.getDouble("total_harga")),
                         rs.getString("status_pemesanan"),
                         currencyFormatter.format(rs.getDouble("denda")),
-                        rs.getTimestamp("created_at") != null ? dateFormatter.format(rs.getTimestamp("created_at")) : ""
+                        rs.getTimestamp("created_at") != null ? dateFormatter.format(rs.getTimestamp("created_at")) : "",
+                        "Hapus"
                 });
             }
 
@@ -115,9 +121,12 @@ public class DataTablePanel extends JPanel {
     }
 
     private void displayPage(int pageNumber) {
-        model.setRowCount(0); // Hapus data sebelumnya dari model tabel
+        model.setRowCount(0);
         int start = (pageNumber - 1) * ROWS_PER_PAGE;
         int end = Math.min(start + ROWS_PER_PAGE, allData.size());
+
+        // Urutkan data berdasarkan ID atau kolom lain jika perlu
+        allData.sort((a, b) -> Integer.compare((Integer) a[0], (Integer) b[0]));  // Urutkan berdasarkan ID
 
         for (int i = start; i < end; i++) {
             model.addRow(allData.get(i));
@@ -149,7 +158,74 @@ public class DataTablePanel extends JPanel {
         return paginationPanel;
     }
 
-    public boolean hasData() {
-        return allData != null && !allData.isEmpty();
+    // Renderer untuk tombol
+    private class ButtonRenderer extends JButton implements TableCellRenderer {
+        public ButtonRenderer() {
+            setOpaque(true);
+            setBackground(Color.RED);
+            setForeground(Color.WHITE);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            setText(value == null ? "" : value.toString());
+            return this;
+        }
+    }
+
+    // Editor untuk menangani aksi klik pada tombol
+    private class ButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private String label;
+        private boolean clicked;
+        private int selectedRow;
+
+        public ButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(e -> fireEditingStopped());
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+            label = value == null ? "" : value.toString();
+            button.setText(label);
+            button.setBackground(Color.RED);
+            button.setForeground(Color.WHITE);
+            clicked = true;
+            selectedRow = row;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            if (clicked) {
+                int modelRow = table.convertRowIndexToModel(selectedRow);
+                int dataId = (int) allData.get(modelRow)[0];
+                int confirmation = JOptionPane.showConfirmDialog(DataTablePanel.this,
+                        "Apakah Anda yakin ingin menghapus data ini?",
+                        "Konfirmasi Hapus",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (confirmation == JOptionPane.YES_OPTION) {
+                    try {
+                        dbManager.deleteDataById(dataId);
+                        allData.remove(modelRow);
+                        refreshData();
+                        JOptionPane.showMessageDialog(DataTablePanel.this, "Data berhasil dihapus.");
+                    } catch (SQLException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(DataTablePanel.this, "Gagal menghapus data.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+            clicked = false;
+            return label;
+        }
+    }
+
+    public void refreshData() {
+        fetchAndDisplayData();
     }
 }
